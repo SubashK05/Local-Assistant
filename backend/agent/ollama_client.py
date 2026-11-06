@@ -7,6 +7,66 @@ from agent.tools.registry import execute_tool
 
 MODEL_NAME = "qwen3.5:4b"
 
+def generate_conversation_title(user_message):
+    """
+    Generate a short, meaningful conversation title using Ollama.
+    """
+
+    try:
+        response = ollama.chat(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+                            You generate concise titles for chat conversations.
+
+                            Rules:
+                            - Understand the user's main intention.
+                            - Generate a title of 3 to 6 words.
+                            - Use clear, meaningful language.
+                            - Do not include quotation marks.
+                            - Do not include explanations.
+                            - Return only the title.
+                            """
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        "Generate a title for this conversation "
+                        "based on the user's first message:\n\n"
+                        f"{user_message}"
+                    )
+                }
+            ],
+            options={
+                "temperature": 0.2
+            }
+        )
+
+        title = (response.message.content or "").strip()
+
+        # Clean up the generated title.
+        title = title.splitlines()[0].strip()
+        title = title.strip("\"'`*# ")
+
+        if title.lower().startswith("title:"):
+            title = title[6:].strip()
+
+        # Use a fallback if Ollama returns an empty title.
+        if not title:
+            title = user_message[:60].strip()
+
+        return title[:60]
+
+    except Exception as error:
+        print("[JARVIS] Title generation failed:", error)
+
+        # Do not interrupt chat creation if title generation fails.
+        return user_message[:60].strip() or "New Conversation"
+
+
+
 # Maximum tool-call rounds for one user request.
 # This is not a conversation-wide or session-wide limit.
 MAX_TOOL_ROUNDS = 10
