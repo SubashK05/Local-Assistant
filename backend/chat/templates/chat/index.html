@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jarvis</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .prompt-input {
+      width: 100%;
+      padding: 12px;
+      resize: vertical;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #202123;
+    }
+
+    /* Main layout */
+
+    .container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      height: 100%;
+      padding: 20px;
+      background: #202123;
+      color: white;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar h2 {
+      margin: 0 0 25px;
+    }
+
+    .new-chat {
+      display: block;
+      padding: 12px;
+      margin-bottom: 20px;
+      background: #343541;
+      color: white;
+      text-decoration: none;
+      border: 1px solid #555;
+      border-radius: 8px;
+    }
+
+    .new-chat:hover {
+      background: #444654;
+    }
+
+    .sidebar-title {
+      margin: 20px 0 10px;
+      color: #aaa;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .conversation {
+      display: block;
+      padding: 10px;
+      margin-bottom: 5px;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .conversation:hover {
+      background: #343541;
+    }
+
+    .no-conversations {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    /* Main chat area */
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f4f4f4;
+    }
+
+    .header {
+      padding: 18px 25px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      flex-shrink: 0;
+    }
+
+    .header h3 {
+      margin: 0;
+    }
+
+    /* Notifications */
+
+    .notifications {
+      padding: 10px 20px 0;
+      flex-shrink: 0;
+    }
+
+    .notification {
+      max-width: 800px;
+      margin: 0 auto 8px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #e2e8f0;
+    }
+
+    .notification.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .notification.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .notification.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .notification.info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Chat messages */
+
+    .messages {
+      flex: 1;
+      min-height: 0;
+      padding: 25px;
+      overflow-y: auto;
+    }
+
+    .message {
+      max-width: 850px;
+      margin: 0 auto 18px;
+      padding: 15px;
+      border-radius: 10px;
+      background: white;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+
+    .message.user {
+      background: #e2e8f0;
+    }
+
+    .message.assistant {
+      background: white;
+    }
+
+    .message.tool {
+      background: #ede9fe;
+    }
+
+    .role {
+      margin-bottom: 8px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .message-content {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .empty-chat {
+      max-width: 800px;
+      margin: 80px auto;
+      text-align: center;
+      color: #777;
+    }
+
+    /* Pending approvals */
+
+    .pending-actions {
+      max-height: 280px;
+      padding: 15px 25px;
+      background: #fff7ed;
+      border-top: 1px solid #fed7aa;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .pending-actions h3 {
+      max-width: 850px;
+      margin: 0 auto 15px;
+      color: #9a3412;
+    }
+
+    .pending-action {
+      max-width: 850px;
+      margin: 0 auto 12px;
+      padding: 15px;
+      background: white;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+    }
+
+    .pending-action h4 {
+      margin: 0 0 10px;
+    }
+
+    .pending-action pre {
+      padding: 12px;
+      background: #f4f4f4;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    .approval-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .approval-buttons form {
+      margin: 0;
+    }
+
+    /* Buttons */
+
+    button {
+      padding: 12px 20px;
+      background: #202123;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #343541;
+    }
+
+    .approve-button {
+      background: #15803d;
+    }
+
+    .approve-button:hover {
+      background: #166534;
+    }
+
+    .reject-button {
+      background: #b91c1c;
+    }
+
+    .reject-button:hover {
+      background: #991b1b;
+    }
+
+    /* Message input */
+
+    .input-area {
+      padding: 18px 25px;
+      background: white;
+      border-top: 1px solid #ddd;
+      flex-shrink: 0;
+    }
+
+    .input-area form {
+      display: flex;
+      max-width: 850px;
+      margin: auto;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      resize: vertical;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #777;
+    }
+
+    /* Responsive layout */
+
+    @media (max-width: 700px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        max-height: 180px;
+      }
+
+      .main {
+        min-height: 0;
+      }
+
+      .messages {
+        padding: 15px;
+      }
+
+      .input-area {
+        padding: 12px;
+      }
+
+      .pending-actions {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>Local AI</h2>
+
+      <a class="new-chat" href="{% url 'create_conversation' %}">
+        + New Chat
+      </a>
+
+      <div class="sidebar-title">Your Conversations</div>
+
+      {% for item in conversations %}
+
+      <a class="conversation" href="/?conversation_id={{ item.id }}">
+        {{ item.title }}
+      </a>
+
+      {% empty %}
+
+      <p class="no-conversations">No conversations yet.</p>
+
+      {% endfor %}
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <!-- Header -->
+      <header class="header">
+        <h3>{{ conversation.title|default:"New Conversation" }}</h3>
+      </header>
+
+      <!-- Django notifications -->
+      {% if messages %}
+
+      <section class="notifications">
+        {% for notification in messages %}
+
+        <div class="notification {{ notification.tags }}">
+          {{ notification }}
+        </div>
+
+        {% endfor %}
+      </section>
+
+      {% endif %}
+
+      <!-- Chat history -->
+      <section class="messages" id="chat-messages">
+        {% for message in chat_messages %}
+
+        <div class="message {{ message.role }}">
+          <div class="role">{{ message.role }}</div>
+
+          <div class="message-content">
+            {{ message.content|linebreaksbr }}
+          </div>
+        </div>
+
+        {% empty %}
+
+        <div class="empty-chat">
+          <h2>Welcome to Local AI</h2>
+          <p>Start a conversation with your local AI assistant.</p>
+        </div>
+
+        {% endfor %}
+      </section>
+
+      <!-- Pending approvals -->
+      {% if pending_actions %}
+      <section class="pending-actions">
+
+        <h3>Pending Approvals</h3>
+
+        {% for action in pending_actions %}
+
+        <div class="pending-action">
+          <h4>{{ action.tool_name }}</h4>
+
+          <pre>{{ action.arguments }}</pre>
+
+          <div class="approval-buttons">
+
+            <form method="POST" action="{% url 'approve_action' action.id %}">
+              {% csrf_token %}
+
+              <input type="hidden" name="conversation_id" value="{{ conversation.id }}">
+
+              <button type="submit" class="approve-button">
+                Approve
+              </button>
+            </form>
+
+            <form method="POST" action="{% url 'reject_action' action.id %}">
+              {% csrf_token %}
+
+              <input type="hidden" name="conversation_id" value="{{ conversation.id }}">
+
+              <button type="submit" class="reject-button">
+                Reject
+              </button>
+            </form>
+
+          </div>
+        </div>
+
+        {% endfor %}
+
+      </section>
+      {% endif %}
+
+      <!-- Message input -->
+      <footer class="input-area">
+        <form method="POST">
+          {% csrf_token %}
+
+          <input class="prompt-input" name="message" rows="2" placeholder="Message your AI assistant..."
+            required></input>
+
+          <button type="submit">Send</button>
+        </form>
+      </footer>
+    </main>
+  </div>
+</body>
+
+</html>
